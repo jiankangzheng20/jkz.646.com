@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>从业人员健康证制作及核验系统</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- QRCode.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- html2canvas CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    /* 证件背景防伪水纹网格效果 */
+    .card-watermark-bg {
+      background-color: #ffffff;
+      background-image: 
+        radial-gradient(circle at 75% 30%, rgba(2, 132, 199, 0.08) 0%, transparent 60%),
+        linear-gradient(45deg, rgba(224, 242, 254, 0.3) 25%, transparent 25%, transparent 75%, rgba(224, 242, 254, 0.3) 75%),
+        linear-gradient(45deg, rgba(224, 242, 254, 0.3) 25%, transparent 25%, transparent 75%, rgba(224, 242, 254, 0.3) 75%);
+      background-size: 100% 100%, 20px 20px, 20px 20px;
+      background-position: 0 0, 0 0, 10px 10px;
+    }
+
+    /* 打印专用样式 */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printable-card, #printable-card * {
+        visibility: visible;
+      }
+      #printable-card {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font
