@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>从业人员预防性健康检查合格证明查询</title>
+    <!-- 引入 qrcodejs 库自动生成底部防伪二维码 -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 15px 10px;
+            display: flex;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .h5-container {
+            width: 100%;
+            max-width: 480px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            overflow: hidden;
+            padding-bottom: 25px;
+        }
+        /* 顶部监制标题 */
+        .h5-top-monitor {
+            text-align: center;
+            color: #1a365d;
+            font-size: 17px;
+            font-weight: bold;
+            padding: 20px 0 12px 0;
+            border-bottom: 2px solid #276749;
+            margin: 0 15px;
+            letter-spacing: 1px;
+        }
+        
+        /* 核心白卡片区域 */
+        .h5-card {
+            background: #ffffff;
+            margin: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+        .h5-card-header {
+            background-color: #1a365d;
+            color: white;
+            text-align: center;
+            padding: 15px 10px;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 1.4;
+        }
+
+        /* 证件主体网格 */
+        .h5-card-body {
+            padding: 20px 15px;
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+        .h5-info-list {
+            flex: 1;
+            font-size: 14px;
+            line-height: 2.2;
+        }
+        .h5-info-list div {
+            display: flex;
+        }
+        .h5-info-list .label {
+            width: 80px;
+            color: #2b6cb0;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+        .h5-info-list .value {
+            color: #2d3748;
+            font-weight: 500;
+        }
+        .h5-info-list .status-pass {
+            color: #2f855a;
+            font-weight: bold;
+        }
+
+        /* 右侧照片区 */
+        .h5-photo-box {
+            width: 90px;
+            height: 120px;
+            background: #edf2f7;
+            border: 1px solid #cbd5e0;
+            overflow: hidden;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+        .h5-photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 底部二维码核验区 */
+        .verification-box {
+            background: #fafbfc;
+            border: 1px solid #edf2f7;
+            margin: 0 15px;
+            border-radius: 6px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .qr-area {
+            background: #ffffff;
+            padding: 5px;
+            border: 1px solid #e2e8f0;
+            width: 90px;
+            height: 90px;
+            flex-shrink: 0;
+        }
+        #qrcode img {
+            width: 90px !important;
+            height: 90px !important;
+        }
+        .verification-text {
+            font-size: 13px;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+        .verification-text .title {
+            color: #1a365d;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .verification-text .sub {
+            color: #718096;
+            font-size: 12px;
+        }
+
+        /* 底部体检机构查询链接 */
+        .footer-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .footer-link a {
+            color: #553c9a;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="h5-container">
+    <!-- 顶部监制 -->
+    <div class="h5-top-monitor">健康委员会监制</div>
+
+    <!-- 中间信息大卡片 (对应图四上方) -->
+    <div class="h5-card">
+        <div class="h5-card-header" id="cardTitle">
+            威宁县从业人员预防性健康检查合格证明
+        </div>
+        <div class="h5-card-body">
+            <div class="h5-info-list">
+                <div><span class="label">编　号：</span><span class="value" id="no">LZBWS04039637</span></div>
+                <div><span class="label">姓　名：</span><span class="value" id="name">黄焕伦</span></div>
+                <div><span class="label">性　别：</span><span class="value" id="gender">男</span></div>
+                <div><span class="label">年　龄：</span><span class="value" id="age">40</span></div>
+                <div><span class="label">检查结论：</span><span class="value status-pass" id="result">合格</span></div>
+                <div><span class="label">发证日期：</span><span class="value" id="date">2026年10月20日</span></div>
+                <div><span class="label">发证单位：</span><span class="value" id="unit">威宁县人民医院</span></div>
+            </div>
+            <div class="h5-photo-box">
+                <img id="avatarImg" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" alt="寸照">
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部二维码与真伪验证区 (对应图四下方) -->
+    <div class="verification-box">
+        <div class="qr-area" id="qrcode"></div>
+        <div class="verification-text">
+            <div class="title">验证二维码查验真伪</div>
+            <div class="sub">扫描验证健康证信息</div>
+            <div style="margin-top: 6px; font-size: 11px; color: #a0aec0;">此健康证信息已上报平台</div>
+        </div>
+    </div>
+
+    <!-- 最下方机构查询链接 -->
+    <div class="footer-link">
+        <a href="javascript:void(0);">🔍 全国体检机构查询</a>
+    </div>
+</div>
+
+<script>
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    window.onload = function() {
+        // 读取 URL 参数或显示默认值
+        const name = getQueryParam('name') || '黄焕伦';
+        const gender = getQueryParam('gender') || '男';
+        const age = getQueryParam('age') || '40';
+        const no = getQueryParam('no') || 'LZBWS04039637';
+        const date = getQueryParam('date') || '2026年10月20日';
+        const unit = getQueryParam('unit') || '威宁县人民医院';
+        const result = getQueryParam('result') || '合格';
+        const photo = getQueryParam('photo');
+        const title = getQueryParam('title');
+
+        if(title) document.getElementById('cardTitle').innerText = title;
+        document.getElementById('name').innerText = name;
+        document.getElementById('gender').innerText = gender;
+        document.getElementById('age').innerText = age;
+        document.getElementById('no').innerText = no;
+        document.getElementById('date').innerText = date;
+        document.getElementById('unit').innerText = unit;
+        document.getElementById('result').innerText = result;
+
+        if (photo) {
+            document.getElementById('avatarImg').src = photo;
+        }
+
+        // 自动生成当前页面的动态二维码（别人扫码时即指向当前包含具体参数的网址）
+        new QRCode(document.getElementById("qrcode"), {
+            text: window.location.href,
+            width: 90,
+            height: 90,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+    }
+</script>
+
+</body>
+</html>
