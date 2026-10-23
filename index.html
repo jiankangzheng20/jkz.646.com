@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>从业人员预防性健康检查合格证明查询</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f7f9fc;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .header {
+            background-color: #1a365d;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .card {
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            margin: 20px;
+            border-radius: 6px;
+            position: relative;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+        .info-label {
+            width: 90px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        .info-value {
+            flex: 1;
+            color: #2d3748;
+        }
+        /* 默认状态下是输入框，当处于 view 模式时转换为纯文本 */
+        .info-value input, .info-value select {
+            width: 100%;
+            padding: 4px 8px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .status-pass {
+            color: #38a169;
+            font-weight: bold;
+        }
+        /* 证件照样式 */
+        .photo-container {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            text-align: center;
+        }
+        .photo-box {
+            width: 90px;
+            height: 120px;
+            border: 1px solid #cbd5e0;
+            background: #edf2f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .photo-box input[type="file"] {
+            display: none; /* 默认隐藏上传控件，由JS控制 */
+        }
+        .photo-tip {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-top: 4px;
+        }
+        .details-section {
+            margin-right: 105px;
+        }
+        .footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 13px;
+            color: #718096;
+            border-top: 1px solid #edf2f7;
+        }
+        .edit-hint {
+            background: #ebf8ff;
+            border: 1px solid #bee3f8;
+            color: #2b6cb0;
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+            margin: 0 20px 10px 20px;
+            text-align: center;
+        }
+        /* 纯展示模式下的样式调整：把输入框变成普通文字，隐藏提示和上传 */
+        .view-mode input, .view-mode select {
+            border: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            pointer-events: none;
+            appearance: none;
+            -webkit-appearance: none;
+            color: #2d3748;
+            font-size: 15px;
+        }
+        .hide-in-view {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="mainContainer">
+    <div class="header">
+        毕节市卫生健康委员会监制
+    </div>
+    
+    <div style="height: 15px;"></div>
+    <div class="edit-hint" id="editHint">提示：下方信息支持直接点击修改，或通过网址参数传递。</div>
+
+    <div class="card">
+        <div style="text-align: center; font-weight: bold; margin-bottom: 15px; color: #1a365d;">
+            威宁县从业人员预防性健康检查合格证明
+        </div>
+
+        <!-- 右侧寸照区域 -->
+        <div class="photo-container">
+            <div class="photo-box" id="photoBox">
+                <span id="photoText" style="font-size: 12px; color: #718096;">暂无照片</span>
+                <img id="avatarImg" style="display: none;" alt="寸照">
+                <input type="file" id="uploadPhoto" accept="image/*">
+            </div>
+            <div class="photo-tip" id="photoTipText">支持更换照片</div>
+        </div>
+
+        <!-- 左侧文本信息 -->
+        <div class="details-section">
+            <div class="info-row">
+                <div class="info-label">编　号：</div>
+                <div class="info-value"><input type="text" id="no" value=""></div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">姓　名：</div>
+                <div class="info-value"><input type="text" id="name" value="黄焕伦"></div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">性　别：</div>
+                <div class="info-value">
+                    <select id="gender">
+                        <option value="男" selected>男</option>
+                        <option value="女">女</option>
+                    </select>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">年　龄：</div>
+                <div class="info-value"><input type="number" id="age" value="40"></div>
+            </div>
+        </div>
+
+        <div style="clear: both;"></div>
+
+        <div style="margin-top: 15px;">
+            <div class="info-row">
+                <div class="info-label">检查结论：</div>
+                <div class="info-value status-pass">合格</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">发证日期：</div>
+                <div class="info-value"><input type="text" id="date" value="2026年10月20日"></div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">发证单位：</div>
+                <div class="info-value"><input type="text" id="unit" value="威宁县人民医院"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        此健康证信息已上报平台<br>
+        <span>🔍 全国体检机构查询</span>
+    </div>
+</div>
+
+<script>
+    function generateRandomNo() {
+        const randomNum = Math.floor(100000 + Math.random() * 900000);
+        return "BJWN" + randomNum;
+    }
+
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    window.onload = function() {
+        // 1. 检查是否为纯展示模式 (url带 ?mode=view)
+        const isViewMode = getQueryParam('mode') === 'view';
+
+        if (isViewMode) {
+            // 如果是扫码查看模式，添加 view-mode 类，隐藏提示框和上传按钮
+            document.body.classList.add('view-mode');
+            const hint = document.getElementById('editHint');
+            if(hint) hint.style.display = 'none';
+            const tip = document.getElementById('photoTipText');
+            if(tip) tip.style.display = 'none';
+        } else {
+            // 编辑模式下才显示文件上传控件
+            document.getElementById('uploadPhoto').style.display = 'block';
+        }
+
+        // 2. 填充数据
+        const urlNo = getQueryParam('no');
+        document.getElementById('no').value = urlNo ? urlNo : generateRandomNo();
+
+        if(getQueryParam('name')) document.getElementById('name').value = getQueryParam('name');
+        if(getQueryParam('gender')) document.getElementById('gender').value = getQueryParam('gender');
+        if(getQueryParam('age')) document.getElementById('age').value = getQueryParam('age');
+        if(getQueryParam('date')) document.getElementById('date').value = getQueryParam('date');
+        if(getQueryParam('unit')) document.getElementById('unit').value = getQueryParam('unit');
+
+        // 如果是通过参数传了图片或者缓存了图片可以自行扩展，这里处理本地上传预览
+        const uploadInput = document.getElementById('uploadPhoto');
+        uploadInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('avatarImg');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('photoText').style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
