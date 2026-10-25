@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>毕节市从业人员健康证制作及核验系统</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- QRCode.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- html2canvas CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    /* 证件背景防伪水纹网格效果 */
+    .card-watermark-bg {
+      background-color: #ffffff;
+      background-image: 
+        radial-gradient(circle at 75% 30%, rgba(2, 132, 199, 0.08) 0%, transparent 60%),
+        linear-gradient(45deg, rgba(224, 242, 254, 0.3) 25%, transparent 25%, transparent 75%, rgba(224, 242, 254, 0.3) 75%),
+        linear-gradient(45deg, rgba(224, 242, 254, 0.3) 25%, transparent 25%, transparent 75%, rgba(224, 242, 254, 0.3) 75%);
+      background-size: 100% 100%, 20px 20px, 20px 20px;
+      background-position: 0 0, 0 0, 10px 10px;
+    }
+
+    /* 打印专用样式 */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printable-card, #printable-card * {
+        visibility: visible;
+      }
+      #printable-card {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        box-shadow: none !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans antialiased">
+
+  <!-- 1. 制作后台顶部导航栏 (仅制作模式/管理员预览模式可见) -->
+  <header id="admin-header" class="no-print bg-slate-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="bg-blue-600 text-white font-black text-xl w-9 h-9 rounded-lg flex items-center justify-center shadow-inner">健</div>
+        <div>
+          <h1 class="font-bold text-base md:text-lg leading-tight">毕节市从业人员健康证制作系统</h1>
+          <p class="text-[11px] text-slate-400">威宁县从业人员预防性健康检查管理后台</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button onclick="switchView('admin')" id="nav-btn-admin" class="px-3.5 py-1.5 text-xs md:text-sm rounded-md bg-blue-600 text-white font-medium shadow transition">制作后台</button>
+        <button onclick="switchView('verify-preview')" id="nav-btn-verify" class="px-3.5 py-1.5 text-xs md:text-sm rounded-md bg-slate-800 text-slate-300 hover:text-white font-medium transition">核验页预览</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 2. 制作后台主界面 (ADMIN VIEW) ==================== -->
+  <main id="view-admin" class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- 左侧：控件与表单区 -->
+    <section class="lg:col-span-5 bg-white p-5 md:p-6 rounded-xl shadow-sm border border-slate-200 self-start">
+      <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+        <h2 class="text-base font-bold text-slate-800 flex items-center">
+          <svg class="w-4 h-4 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+          人员数据录入
+        </h2>
+        <span class="text-[11px] bg-emerald-50 text-emerald-600 font-medium px-2 py-0.5 rounded-full border border-emerald-100">实时渲染</span>
+      </div>
+
+      <form id="health-card-form" onsubmit="event.preventDefault();" class="space-y-3.5">
+        <!-- 姓名 -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">姓名</label>
+          <input type="text" id="input-name" value="黄焕伦" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
+        </div>
+
+        <!-- 性别与年龄 -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">性别</label>
+            <select id="input-gender" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm bg-white">
+              <option value="男">男</option>
+              <option value="女">女</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">年龄</label>
+            <input type="number" id="input-age" value="40" min="1" max="120" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
+          </div>
+        </div>
+
+        <!-- 证件号 (BJWN + 随机 6 位) -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-xs font-semibold text-slate-600">证件编号</label>
+            <button type="button" onclick="generateNewCardId()" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center">
+              <svg class="w-3.5 h-3.5 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              一键更换证件号
+            </button>
+          </div>
+          <input type="text" id="input-card-id" readonly class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-mono font-bold text-blue-700 text-sm cursor-not-allowed">
+        </div>
+
+        <!-- 发证日期 -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">发证日期 (制作时间)</label>
+          <input type="date" id="input-issue-date" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
+        </div>
+
+        <!-- 体检单位 -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">体检单位</label>
+          <input type="text" id="input-hospital" value="威宁县人民医院" readonly class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-600 text-sm cursor-not-allowed font-medium">
+        </div>
+
+        <!-- 上传照片 -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">上传个人证件照 (自动转 JPEG)</label>
+          <input type="file" id="input-photo" accept="image/*" class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+        </div>
+
+        <!-- 功能按钮区域 -->
+        <div class="pt-3 border-t border-slate-100 space-y-2">
+          <button type="button" onclick="saveCurrentRecord()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg shadow text-sm transition flex justify-center items-center">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+            保存卡片数据 (支持 JPEG 格式)
+          </button>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="downloadCardImage()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium py-2 rounded-lg text-xs shadow transition flex justify-center items-center">
+              <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              导出 JPEG 卡片
+            </button>
+            <button type="button" onclick="window.print()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded-lg text-xs shadow transition flex justify-center items-center">
+              <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+              直接打印
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- 右侧：卡片预览与历史数据记录 -->
+    <section class="lg:col-span-7 flex flex-col items-center">
+      
+      <!-- 预览说明 -->
+      <div class="w-full flex justify-between items-center mb-2 px-1">
+        <span class="text-xs font-bold text-slate-700">实时健康证卡片效果</span>
+        <span class="text-[11px] text-slate-400">标准 3:4 排版 (毕节市样式)</span>
+      </div>
+
+      <!-- 打印与保存目标卡片 -->
+      <div id="printable-card" class="w-full max-w-[480px] bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200 text-slate-900">
+        
+        <!-- 卡片上半部分：基本信息 -->
+        <div class="card-watermark-bg p-4 relative border-b-2 border-sky-500">
+          
+          <!-- 标头栏 (毕节市) -->
+          <div class="bg-sky-600 -mx-4 -mt-4 px-3.5 py-2 mb-3 text-white flex justify-between items-center shadow-xs">
+            <div class="flex items-center space-x-1.5">
+              <div class="w-5 h-5 rounded-full bg-white text-sky-600 font-black text-[10px] flex items-center justify-center">CPC</div>
+              <h3 class="font-extrabold text-base tracking-wide">毕节市从业人员健康体检合格证</h3>
+            </div>
+            <span id="preview-top-code" class="text-[10px] font-mono font-semibold tracking-widest text-sky-100">2261015532</span>
+          </div>
+
+          <!-- 信息核心区：三列排版 -->
+          <div class="grid grid-cols-12 gap-2 items-center py-1">
+            
+            <!-- 文字 (占 6 列) -->
+            <div class="col-span-6 space-y-1.5 text-xs font-medium">
+              <div class="flex items-baseline">
+                <span class="text-slate-500 w-14 shrink-0 text-[11px]">姓　名：</span>
+                <span id="preview-name" class="font-bold text-sm text-slate-900">黄焕伦</span>
+              </div>
+              <div class="flex items-baseline">
+                <span class="text-slate-500 w-14 shrink-0 text-[11px]">性　别：</span>
+                <span id="preview-gender" class="text-slate-800 mr-2">男</span>
+                <span class="text-slate-500 text-[11px] mr-1">年　龄：</span>
+                <span id="preview-age" class="text-slate-800">40</span>
+              </div>
+              <div class="flex items-baseline">
+                <span class="text-slate-500 w-14 shrink-0 text-[11px]">证　号：</span>
+                <span id="preview-card-id" class="font-mono font-bold text-slate-900 text-xs">BJWN0439637</span>
+              </div>
+              <div class="flex items-baseline">
+                <span class="text-slate-500 w-14 shrink-0 text-[11px]">发证日期：</span>
+                <span id="preview-issue-date" class="text-slate-800 text-[11px] font-semibold">2026年10月20日</span>
+              </div>
+              <div class="flex items-baseline">
+                <span class="text-slate-500 w-14 shrink-0 text-[11px]">体检单位：</span>
+                <span id="preview-hospital" class="text-slate-800 text-[11px] font-semibold">威宁县人民医院</span>
+              </div>
+            </div>
+
+            <!-- 二维码与照片 (占 6 列) -->
+            <div class="col-span-6 flex items-center justify-end space-x-2 border-l border-slate-100 pl-1">
+              <!-- 加大二维码 -->
+              <div class="flex flex-col items-center shrink-0">
+                <div id="card-qrcode" class="p-1 bg-white border border-slate-200 rounded shadow-2xs"></div>
+              </div>
+
+              <!-- 头像 -->
+              <div class="w-20 h-26 border border-slate-300 rounded overflow-hidden bg-slate-100 shrink-0 shadow-2xs">
+                <img id="preview-photo" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='130' viewBox='0 0 100 130'><rect width='100' height='130' fill='%23cbd5e1'/><circle cx='50' cy='45' r='22' fill='%2394a3b8'/><path d='M20 110 C20 80, 80 80, 80 110 Z' fill='%2394a3b8'/></svg>" alt="证件照" class="w-full h-full object-cover">
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 底部宣导文字 -->
+          <div class="mt-2.5 pt-1.5 border-t border-sky-100 text-center text-[10px] tracking-widest text-sky-700 font-bold">
+            关 注 民 生 健 康　　共 筑 和 谐 社 会
+          </div>
+
+        </div>
+
+        <!-- 卡片下半部分：使用说明 -->
+        <div class="bg-white p-4 text-slate-700">
+          <h4 class="text-center font-bold text-xs tracking-widest text-slate-800 mb-2">使 用 说 明</h4>
+          <ol class="text-[10px] space-y-1.5 leading-normal text-slate-600 list-decimal list-inside px-0.5">
+            <li>本证适用于食品、药品、保健食品, 化妆品, 医疗器械、公共场所、生活饮用水、消毒产品等行业从业人员。</li>
+            <li>从业人员工作时必须佩戴本证并自觉接受监督检查。</li>
+            <li>持证人要妥善保管本证，如有遗失或损坏需及时补办。</li>
+            <li>本证全市通用，签发之日起有效期一年。</li>
+            <li>查询方法：通过扫码二维码查询体检信息。</li>
+          </ol>
+        </div>
+
+      </div>
+
+      <!-- 历史记录控制面板 -->
+      <div class="w-full max-w-[480px] mt-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-xs font-bold text-slate-600 uppercase">本地记录列表 (<span id="record-count">0</span>)</h3>
+          <button onclick="clearAllRecords()" class="text-[10px] text-red-500 hover:underline">清空记录</button>
+        </div>
+        <div id="records-list" class="space-y-1.5 max-h-36 overflow-y-auto pr-1 text-xs">
+          <p class="text-slate-400 italic text-[11px] text-center py-2">暂无历史保存数据</p>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==================== 3. 手机扫码查验结果展示 (VERIFY VIEW) ==================== -->
+  <main id="view-verify" class="hidden min-h-screen bg-slate-100 py-4 px-2 flex flex-col items-center">
+    
+    <!-- 模拟移动端 H5 容器 -->
+    <div class="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 flex flex-col min-h-[640px]">
+      
+      <!-- 安全域名模拟栏 -->
+      <div class="bg-slate-50 px-3 py-2 border-b border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+        <div class="flex items-center space-x-1 truncate">
+          <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+          <span class="font-mono truncate">jk.weining.gov.cn/v</span>
+        </div>
+        <span class="text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded text-[9px] shrink-0">官方认证节点</span>
+      </div>
+
+      <div class="p-4 flex-1 flex flex-col justify-between">
+        
+        <div>
+          <!-- 监制单位 -->
+          <h2 class="text-center font-bold text-base text-slate-800 tracking-wider mb-2">健康委员会监制</h2>
+          <div class="w-12 h-0.5 bg-emerald-600 mx-auto mb-4"></div>
+
+          <!-- 查验结果核心卡片：严格对齐后台卡片字体及排版 -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-4">
+            
+            <!-- 深蓝标题栏 (毕节市) -->
+            <div class="bg-slate-900 text-white text-center py-2.5 px-3">
+              <h3 class="font-bold text-sm tracking-wide">毕节市从业人员预防性健康</h3>
+              <h3 class="font-bold text-sm tracking-wide">检查合格证明</h3>
+            </div>
+
+            <!-- 数据列：与制作界面保持完全一致的字号、行高与粗细 -->
+            <div class="p-3.5 grid grid-cols-12 gap-2 items-center">
+              
+              <!-- 详细字段 (占 8 列) -->
+              <div class="col-span-8 space-y-2 text-xs font-medium">
+                <div class="flex items-baseline">
+                  <span class="text-slate-400 w-16 shrink-0 text-[11px]">编　　号：</span>
+                  <span id="v-card-id" class="font-mono font-bold text-slate-800 text-xs">BJWN0439637</span>
+                </div>
+                <div class="flex items-baseline">
+                  <span class="text-slate-400 w-16 shrink-0 text-[11px]">姓　　名：</span>
+                  <span id="v-name" class="font-bold text-slate-900 text-sm">黄焕伦</span>
+                </div>
+                <div class="flex items-baseline">
+                  <span class="text-slate-400 w-16 shrink-0 text-[11px]">性　　别：</span>
+                  <span id="v-gender" class="text-slate-700 text-xs">男</span>
+                </div>
+                <div class="flex items-baseline">
+                  <span class="text-slate-400 w-16 shrink-0 text-[11px]">年　　龄：</span>
+                  <span id="v-age" class="text-slate-700 text-xs">40</span>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-slate-400 w-16 shrink-0 text-[11px]">检查结论：</span>
+                  <span class="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded text-[11px]">合格</span>
+                </div>
+                <div class="flex items-baseline">
+                  <span class="text-slate-400 w-16 shrink-0 text-[11px]">发证日期：</span>
+                  <span id="v-issue-date" class="text-slate-700 text-[11px] font-semibold">2026年10月20日</span>
+                </div>
+                <div class="flex items-baseline">
+                  <span class="text-slate-400 w-16 shrink-0 text-[11px]">发证单位：</span>
+                  <span id="v-hospital" class="text-slate-700 text-[11px] font-semibold">威宁县人民医院</span>
+                </div>
+              </div>
+
+              <!-- 照片 (占 4 列) -->
+              <div class="col-span-4 flex justify-end">
+                <div class="w-18 h-24 border border-slate-200 rounded overflow-hidden bg-slate-100 shadow-2xs">
+                  <img id="v-photo" src="" alt="核验照片" class="w-full h-full object-cover">
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- 查验二维码与动态防伪 -->
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center space-x-3">
+            <div id="v-qrcode" class="p-1 bg-white border border-slate-200 rounded shrink-0"></div>
+            <div>
+              <h4 class="font-bold text-xs text-slate-800 mb-0.5">验证二维码查验真伪</h4>
+              <p class="text-[10px] text-slate-500 mb-1">扫描验证健康证实时信息</p>
+              <p class="text-[9px] text-emerald-600 font-medium">此健康证信息已同步上报平台</p>
+              <p id="v-time-stamp" class="text-[9px] text-slate-400 mt-1 font-mono">核验时间：2026-10-24 02:10</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部版权 -->
+        <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+          <a href="javascript:void(0)" class="inline-flex items-center text-xs text-blue-600 font-medium">
+            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            全国体检机构查询
+          </a>
+          <p class="text-[9px] text-slate-400 mt-1">© 威宁县卫生健康局 版权所有</p>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ==================== 4. 核心 JavaScript 逻辑 ==================== -->
+  <script>
+    let cardState = {
+      name: "黄焕伦",
+      gender: "男",
+      age: "40",
+      cardId: "",
+      issueDate: "",
+      hospital: "威宁县人民医院",
+      photoUrl: ""
+    };
+
+    let qrAdminInstance = null;
+    let qrVerifyInstance = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById("input-issue-date").value = today;
+
+      generateNewCardId();
+      bindEvents();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const encodedData = urlParams.get('data');
+
+      if (encodedData) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(escape(atob(encodedData))));
+          
+          const savedDb = JSON.parse(localStorage.getItem('health_cards_db') || '[]');
+          const matchedRecord = savedDb.find(r => r.cardId === parsed.i);
+          if (matchedRecord && matchedRecord.photoUrl) {
+            cardState.photoUrl = matchedRecord.photoUrl;
+          }
+
+          renderVerifyView(parsed);
+          switchView('verify-only');
+        } catch (e) {
+          console.error("二维码解析失败:", e);
+          updatePreview();
+        }
+      } else {
+        updatePreview();
+        renderSavedRecords();
+      }
+    });
+
+    function generateNewCardId() {
+      const saved = JSON.parse(localStorage.getItem('health_cards_db') || '[]');
+      const existSet = new Set(saved.map(item => item.cardId));
+
+      let randomId = "";
+      do {
+        const randNum = Math.floor(100000 + Math.random() * 900000);
+        randomId = `BJWN${randNum}`;
+      } while (existSet.has(randomId));
+
+      document.getElementById("input-card-id").value = randomId;
+      updatePreview();
+    }
+
+    function bindEvents() {
+      const formInputs = ["input-name", "input-gender", "input-age", "input-issue-date"];
+      formInputs.forEach(id => {
+        document.getElementById(id).addEventListener("input", updatePreview);
+      });
+
+      document.getElementById("input-photo").addEventListener("change", function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            compressImageToJPEG(evt.target.result, 240, 320, 0.8, function(compressedData) {
+              cardState.photoUrl = compressedData;
+              document.getElementById("preview-photo").src = compressedData;
+              updatePreview();
+            });
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    function compressImageToJPEG(base64, targetWidth, targetHeight, quality, callback) {
+      const img = new Image();
+      img.src = base64;
+      img.onload = function() {
+        const canvas = document.createElement("canvas");
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, targetWidth, targetHeight);
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+        callback(canvas.toDataURL("image/jpeg", quality));
+      };
+    }
+
+    function updatePreview() {
+      cardState.name = document.getElementById("input-name").value || "黄焕伦";
+      cardState.gender = document.getElementById("input-gender").value;
+      cardState.age = document.getElementById("input-age").value || "40";
+      cardState.cardId = document.getElementById("input-card-id").value;
+      
+      const rawDate = document.getElementById("input-issue-date").value;
+      if (rawDate) {
+        const d = new Date(rawDate);
+        cardState.issueDate = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+      } else {
+        cardState.issueDate = "2026年10月20日";
+      }
+
+      cardState.hospital = document.getElementById("input-hospital").value;
+
+      document.getElementById("preview-name").textContent = cardState.name;
+      document.getElementById("preview-gender").textContent = cardState.gender;
+      document.getElementById("preview-age").textContent = cardState.age;
+      document.getElementById("preview-card-id").textContent = cardState.cardId;
+      document.getElementById("preview-issue-date").textContent = cardState.issueDate;
+      document.getElementById("preview-hospital").textContent = cardState.hospital;
+
+      generateQRCodes();
+    }
+
+    function generateQRCodes() {
+      const payload = {
+        n: cardState.name,
+        g: cardState.gender,
+        a: cardState.age,
+        i: cardState.cardId,
+        d: cardState.issueDate,
+        h: cardState.hospital
+      };
+
+      const base64Str = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+      const fullVerifyUrl = `${window.location.origin}${window.location.pathname}?data=${base64Str}`;
+
+      const qrBoxAdmin = document.getElementById("card-qrcode");
+      qrBoxAdmin.innerHTML = "";
+      qrAdminInstance = new QRCode(qrBoxAdmin, {
+        text: fullVerifyUrl,
+        width: 82,
+        height: 82,
+        correctLevel: QRCode.CorrectLevel.L
+      });
+
+      renderVerifyView(payload);
+    }
+
+    function renderVerifyView(data) {
+      document.getElementById("v-name").textContent = data.n || cardState.name;
+      document.getElementById("v-gender").textContent = data.g || cardState.gender;
+      document.getElementById("v-age").textContent = data.a || cardState.age;
+      document.getElementById("v-card-id").textContent = data.i || cardState.cardId;
+      document.getElementById("v-issue-date").textContent = data.d || cardState.issueDate;
+      document.getElementById("v-hospital").textContent = data.h || cardState.hospital;
+
+      const photoImg = document.getElementById("v-photo");
+      if (cardState.photoUrl) {
+        photoImg.src = cardState.photoUrl;
+      } else {
+        photoImg.src = document.getElementById("preview-photo").src;
+      }
+
+      const now = new Date();
+      document.getElementById("v-time-stamp").textContent = `核验时间：${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+
+      const qrBoxVerify = document.getElementById("v-qrcode");
+      qrBoxVerify.innerHTML = "";
+      qrVerifyInstance = new QRCode(qrBoxVerify, {
+        text: window.location.href,
+        width: 52,
+        height: 52,
+        correctLevel: QRCode.CorrectLevel.L
+      });
+    }
+
+    function switchView(view) {
+      const adminView = document.getElementById("view-admin");
+      const verifyView = document.getElementById("view-verify");
+      const header = document.getElementById("admin-header");
+      const btnNavAdmin = document.getElementById("nav-btn-admin");
+      const btnNavVerify = document.getElementById("nav-btn-verify");
+
+      if (view === 'admin') {
+        adminView.classList.remove("hidden");
+        verifyView.classList.add("hidden");
+        header.classList.remove("hidden");
+        btnNavAdmin.className = "px-3.5 py-1.5 text-xs md:text-sm rounded-md bg-blue-600 text-white font-medium shadow transition";
+        btnNavVerify.className = "px-3.5 py-1.5 text-xs md:text-sm rounded-md bg-slate-800 text-slate-300 hover:text-white font-medium transition";
+      } else if (view === 'verify-preview') {
+        adminView.classList.add("hidden");
+        verifyView.classList.remove("hidden");
+        header.classList.remove("hidden");
+        btnNavVerify.className = "px-3.5 py-1.5 text-xs md:text-sm rounded-md bg-blue-600 text-white font-medium shadow transition";
+        btnNavAdmin.className = "px-3.5 py-1.5 text-xs md:text-sm rounded-md bg-slate-800 text-slate-300 hover:text-white font-medium transition";
+      } else if (view === 'verify-only') {
+        adminView.classList.add("hidden");
+        verifyView.classList.remove("hidden");
+        header.classList.add("hidden");
+      }
+    }
+
+    function saveCurrentRecord() {
+      let records = JSON.parse(localStorage.getItem('health_cards_db') || '[]');
+      const index = records.findIndex(r => r.cardId === cardState.cardId);
+
+      if (index >= 0) {
+        records[index] = { ...cardState };
+      } else {
+        records.unshift({ ...cardState });
+      }
+
+      localStorage.setItem('health_cards_db', JSON.stringify(records));
+      alert("卡片及个人照片（JPEG 格式）已存入数据库！");
+      renderSavedRecords();
+    }
+
+    function renderSavedRecords() {
+      const records = JSON.parse(localStorage.getItem('health_cards_db') || '[]');
+      const container = document.getElementById("records-list");
+      document.getElementById("record-count").textContent = records.length;
+
+      if (records.length === 0) {
+        container.innerHTML = `<p class="text-slate-400 italic text-[11px] text-center py-2">暂无历史保存数据</p>`;
+        return;
+      }
+
+      container.innerHTML = records.map((r, idx) => `
+        <div class="flex justify-between items-center p-2 bg-slate-50 border border-slate-200 rounded text-xs hover:bg-slate-100 transition">
+          <div>
+            <span class="font-bold text-slate-800 mr-2">${r.name}</span>
+            <span class="font-mono text-blue-600 text-[11px]">${r.cardId}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="loadRecord(${idx})" class="text-blue-600 hover:underline text-[11px]">调取</button>
+            <button onclick="deleteRecord(${idx})" class="text-red-500 hover:underline text-[11px]">删除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadRecord(index) {
+      const records = JSON.parse(localStorage.getItem('health_cards_db') || '[]');
+      const target = records[index];
+      if (target) {
+        document.getElementById("input-name").value = target.name;
+        document.getElementById("input-gender").value = target.gender;
+        document.getElementById("input-age").value = target.age;
+        document.getElementById("input-card-id").value = target.cardId;
+        
+        if (target.photoUrl) {
+          cardState.photoUrl = target.photoUrl;
+          document.getElementById("preview-photo").src = target.photoUrl;
+        }
+
+        updatePreview();
+      }
+    }
+
+    function deleteRecord(index) {
+      let records = JSON.parse(localStorage.getItem('health_cards_db') || '[]');
+      records.splice(index, 1);
+      localStorage.setItem('health_cards_db', JSON.stringify(records));
+      renderSavedRecords();
+    }
+
+    function clearAllRecords() {
+      if (confirm("确定要清空所有历史数据吗？")) {
+        localStorage.removeItem('health_cards_db');
+        renderSavedRecords();
+      }
+    }
+
+    function downloadCardImage() {
+      const cardElement = document.getElementById("printable-card");
+      html2canvas(cardElement, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: "#ffffff"
+      }).then(canvas => {
+        const link = document.createElement("a");
+        link.download = `健康证_${cardState.name}_${cardState.cardId}.jpg`;
+        link.href = canvas.toDataURL("image/jpeg", 0.92);
+        link.click();
+      });
+    }
+  </script>
+</body>
+</html>
